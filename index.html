@@ -33,6 +33,7 @@ html,body{height:100%;margin:0;background:#dfe6ea;overflow:hidden;font:500 14px/
   <div id="stage"><canvas id="gl" aria-label="Evin 3B modeli. Parmakla döndür, iki parmakla yakınlaş."></canvas><div id="msg">Model yükleniyor</div><div id="clock"></div><div id="tog"><button id="night" aria-pressed="false">Gece yap</button><button id="auto" hidden>Saate dön</button></div><a id="cr" href="https://sketchfab.com/3d-models/hyundai-accent-tagaz-2004-b00b5faebc314e54aef423e46230e963" target="_blank" rel="noopener">Araç: panderlaike_design, CC BY 4.0, değiştirildi</a></div>
   <div id="views" role="group" aria-label="Görünüm">
     <button data-v="antre" aria-pressed="true">Giriş</button>
+    <button data-v="veranda" aria-pressed="false">Veranda</button>
     <button data-v="tum" aria-pressed="false">Tüm ev</button>
     <button data-v="yan" aria-pressed="false">Yan</button>
     <button data-v="arka" aria-pressed="false">Arka</button>
@@ -86,7 +87,7 @@ function init(){
   M={steel:mat(0x383e42,{roughness:.55,metalness:.1}),cedar:mat(0x8f9294,{roughness:.6}),cedarD:mat(0x6d7174,{roughness:.6}),
      top:mat(0xa5683a),shelf:mat(0xc9a27a),
      wall:mat(0xeeece6,{roughness:.95}),plinth:mat(0x6a6f72,{roughness:.9}),frame:mat(0x383e42,{roughness:.4,metalness:.18}),
-     glass:mat(0x3c4c56,{roughness:.04,metalness:.95,envMapIntensity:1.3}),stair:mat(0x8b8f92,{roughness:.8}),
+     glass:mat(0x9dbccc,{roughness:.06,metalness:.45,envMapIntensity:1.5}),curtain:new THREE.MeshStandardMaterial({color:0xf4f1ea,transparent:true,opacity:.82,roughness:.9}),stair:mat(0x8b8f92,{roughness:.8}),
      ground:mat(0xc9c5b8,{roughness:1}),eave:mat(0xf3f1ec),roofH:mat(0x4b5054),
      poly:new THREE.MeshStandardMaterial({color:0xf3f6f6,transparent:true,opacity:.62,roughness:.45,side:THREE.DoubleSide,depthWrite:false}),
      panel:mat(0x4a5054,{roughness:.55,metalness:.2}),
@@ -101,7 +102,7 @@ function init(){
      led:new THREE.MeshStandardMaterial({color:0xfff3df,emissive:0xffdfb0,emissiveIntensity:.12}),
      shadow:new THREE.ShadowMaterial({opacity:.32}),
      endg:mat(0xd9b98c),bark:mat(0x6d4b30),shoe:mat(0x4a4f55),shoe2:mat(0x9c6b4a)};
-  Object.values(M).forEach(m=>{if(m.isMeshStandardMaterial&&m!==M.glass&&m!==M.glassN&&m!==M.glassS&&m!==M.chrome)m.envMapIntensity=.45;});
+  Object.values(M).forEach(m=>{if(m.isMeshStandardMaterial&&m!==M.glass&&m!==M.curtain&&m!==M.glassN&&m!==M.glassS&&m!==M.chrome)m.envMapIntensity=.45;});
   const pl=tex(plaster,256);
   const pave=(x,n)=>{x.fillStyle='#8d8a82';x.fillRect(0,0,n,n);const c=8,w=n/c,h=n/(c*2);for(let r=0;r<c*2;r++)for(let k=-1;k<c;k++){const v=168+Math.random()*30,o=(r%2)*w/2;x.fillStyle=`rgb(${v},${v-3},${v-10})`;x.fillRect(k*w+o+1,r*h+1,w-2,h-2);}speck(x,n,5000,120,.12);};
   const gr=(x,n)=>{x.fillStyle='#8e9193';x.fillRect(0,0,n,n);for(let i=0;i<16000;i++){const v=Math.random();x.fillStyle=v<.45?'rgba(50,52,55,.5)':v<.85?'rgba(190,192,194,.5)':'rgba(240,240,240,.6)';x.fillRect(Math.random()*n,Math.random()*n,1.6,1.6);}};
@@ -124,7 +125,7 @@ function init(){
 }
 function houseParts(full){
   const g=G(),a=[], push=(...p)=>a.push(p);
-  push(HX0,5.22,0,SOFFIT,-.4,0,M.wall);
+  if(full) push(HX0,5.22,0,SOFFIT,-.4,0,M.wall); else {push(.08,5.22,0,SOFFIT,-.4,0,M.wall);push(HX0,.08,0,SILL,-.4,0,M.wall);push(HX0,.08,DOOR_HEAD,SOFFIT,-.4,0,M.wall);}
   push(HX0,5.22,0,.35,-.4,.012,M.plinth);
   push(HX0-.5,5.72,SOFFIT,SOFFIT+.14,-.4,.5,M.eave);
   push(HX0-.5,5.72,SOFFIT-.02,SOFFIT+.16,.5,.58,M.frame);
@@ -138,8 +139,11 @@ function buildHouse(){
   const gnd=new THREE.Mesh(new THREE.PlaneGeometry(300,300),M.soil); gnd.rotation.x=-Math.PI/2; gnd.receiveShadow=true; house.add(gnd);
   const parts=houseParts();
   parts.forEach(p=>house.add(bx(...p)));
-  const win=(x0,x1,y0,y1)=>{house.add(bx(x0,x1,y0,y1,-.02,.015,M.frame));house.add(bx(x0+.07,x1-.07,y0+.07,y1-.07,-.02,.02,M.glass));house.add(bx(x0-.03,x1+.03,y0-.03,y0,-.02,.05,M.eave));};
-  win(HX0+.05,.08,SILL,DOOR_HEAD); win(2.6,4.24,SILL,2.92);
+  const win=(x0,x1,y0,y1)=>{house.add(bx(x0,x1,y0,y1,-.02,.015,M.frame));house.add(bx(x0+.07,x1-.07,y0+.07,y1-.07,-.02,.02,M.glass));[[x0+.09,x0+.36],[x1-.36,x1-.09]].forEach(([a,b])=>house.add(bx(a,b,y0+.09,y1-.09,.02,.024,M.curtain)));house.add(bx(x0-.03,x1+.03,y0-.03,y0,-.02,.05,M.eave));};
+  {const a=HX0+.05,b=.08,t=DOOR_HEAD,h=(x0,x1,y0,y1)=>house.add(bx(x0,x1,y0,y1,-.06,.015,M.frame));
+    h(a,b,SILL,SILL+.06);h(a,b,t-.06,t);h(a,a+.06,SILL,t);h(b-.06,b,SILL,t);
+    const gp=bx(a+.06,b-.06,SILL+.06,t-.06,-.03,-.022,M.glassN);gp.castShadow=false;gp.renderOrder=2;house.add(gp);
+    house.add(bx(a-.03,b+.03,SILL-.03,SILL,-.02,.05,M.eave));} win(2.6,4.24,SILL,2.92);
   house.add(bx(.21,1.27,3*R0,DOOR_HEAD,-.02,.015,M.frame)); house.add(bx(.29,1.19,3*R0+.1,DOOR_HEAD-.1,-.02,.02,M.glass));
   house.add(bx(1.72,1.98,1.5,1.85,0,.02,M.eave));
   {
@@ -182,11 +186,37 @@ function hip(x0,x1,z0,z1,y,rise,m){
   const ge=new THREE.BufferGeometry();ge.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));ge.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));ge.computeVertexNormals();
   const me=new THREE.Mesh(ge,m);me.castShadow=true;me.receiveShadow=true;return {me,A,B,C,D,P1,P2};
 }
+function veranda(add,F){
+  const fr=mat(0x4a3a2c,{roughness:.75}), cu=mat(0xece6d8,{roughness:.95}), pl=mat(0x8d9a86,{roughness:.9});
+  const seat=(n,x,z,ry)=>{const g=new THREE.Group(), w=.72*n+.16, a=m=>g.add(m);
+    a(bx(-w/2,w/2,.13,.3,-.4,.4,fr)); a(bx(-w/2,w/2,.3,.74,-.4,-.3,fr));
+    a(bx(-w/2,-w/2+.09,.3,.58,-.4,.4,fr)); a(bx(w/2-.09,w/2,.3,.58,-.4,.4,fr));
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([p,q])=>a(bx(p*(w/2-.05)-.025,p*(w/2-.05)+.025,0,.13,q*.35-.025,q*.35+.025,fr)));
+    for(let i=0;i<n;i++){const c=-w/2+.09+i*.72+.36;
+      a(bx(c-.345,c+.345,.3,.43,-.3,.38,cu)); a(bx(c-.33,c+.33,.43,.72,-.31,-.17,cu));
+      if(i%2===0) {const p=bx(c-.15,c+.15,.43,.67,-.17,-.08,pl); p.rotation.x=-.25; a(p);}
+    }
+    g.position.set(x,F,z); g.rotation.y=ry; add(g);};
+  seat(3,-2.1,-2.9,0); seat(1,-3.75,-1.75,Math.PI/2); seat(1,-.45,-1.75,-Math.PI/2);
+  const tb=mat(0x4a3a2c,{roughness:.7}), tg=new THREE.MeshStandardMaterial({color:0xcfe0e3,transparent:true,opacity:.45,roughness:.1,metalness:.3});
+  add(bx(-2.7,-1.5,F+.34,F+.36,-2.05,-1.45,tg));
+  [[-2.65,-2],[-1.55,-2],[-2.65,-1.5],[-1.55,-1.5]].forEach(([x,z])=>add(bx(x-.025,x+.025,F,F+.34,z-.025,z+.025,tb)));
+  add(bx(-2.7,-1.5,F+.12,F+.14,-2.05,-1.45,tb));
+  add(cyl([-2.1,F+.36,-1.75],[-2.1,F+.47,-1.75],.06,mat(0xb1643c,{roughness:.8}),12));
+}
 function site3d(){
   const add=m=>house.add(m), W=(x0,x1,y0,y1,z)=>{const d=z<-1?-1:1;add(bx(x0,x1,y0,y1,z-.015,z+.015,M.frame));add(bx(x0+.07,x1-.07,y0+.07,y1-.07,z-.02,z+.02,M.glass));add(bx((x0+x1)/2-.025,(x0+x1)/2+.025,y0+.07,y1-.07,z-.03,z+.03,M.frame));add(bx(x0-.03,x1+.03,y0-.03,y0,z-.06,z+.06,M.eave));};
-  const V=(z0,z1,y0,y1,x)=>{add(bx(x-.015,x+.015,y0,y1,z0,z1,M.frame));add(bx(x-.02,x+.02,y0+.07,y1-.07,z0+.07,z1-.07,M.glass));add(bx(x-.03,x+.03,y0+.07,y1-.07,(z0+z1)/2-.025,(z0+z1)/2+.025,M.frame));add(bx(x-.06,x+.06,y0-.03,y0,z0-.03,z1+.03,M.eave));};
+  const V=(z0,z1,y0,y1,x,gm)=>{const d=x<0?-1:1;[[y0,y0+.07,z0,z1],[y1-.07,y1,z0,z1],[y0,y1,z0,z0+.07],[y0,y1,z1-.07,z1]].forEach(([a,b,c,e])=>add(bx(x-.015,x+.015,a,b,c,e,M.frame)));const gl=bx(x-.012,x+.012,y0+.07,y1-.07,z0+.07,z1-.07,gm||M.glass);gl.renderOrder=2;gl.castShadow=!gm;add(gl);if(!gm)[[z0+.09,z0+.33],[z1-.33,z1-.09]].forEach(([a,b])=>add(bx(x+d*.014,x+d*.018,y0+.09,y1-.09,a,b,M.curtain)));add(bx(x-.03,x+.03,y0+.07,y1-.07,(z0+z1)/2-.025,(z0+z1)/2+.025,M.frame));add(bx(x-.06,x+.06,y0-.03,y0,z0-.03,z1+.03,M.eave));};
   const sl=new THREE.Mesh(new THREE.PlaneGeometry(11.52,18.3),M.ground); sl.rotation.x=-Math.PI/2; sl.position.set(.16,.016,-5.95); sl.receiveShadow=true; add(sl);
-  add(bx(HX0,5.22,0,SOFFIT,HZ0,-.4,M.wall));
+  const VZ=-3.56, F0=3*R0+.005;
+  add(bx(HX0,5.22,0,SOFFIT,HZ0,VZ,M.wall));
+  add(bx(1.27,5.22,0,SOFFIT,VZ,-.4,M.wall));
+  add(bx(HX0,1.27,0,F0-.01,VZ,-.4,M.plinth));
+  add(bx(HX0,HX0+.2,0,SILL,VZ,-.4,M.wall)); add(bx(HX0,HX0+.2,DOOR_HEAD,SOFFIT,VZ,-.4,M.wall)); add(bx(HX0,HX0+.2,SILL,DOOR_HEAD,VZ,-3.3,M.wall));
+  add(bx(HX0,1.27,DOOR_HEAD+.04,SOFFIT,VZ,-.4,M.eave));
+  {const fl=mat(0xc9c2b4,{roughness:.55}); add(bx(HX0+.2,1.27,F0-.012,F0,VZ,-.4,fl));}
+  add(bx(.3,1.1,F0,2.5,VZ,VZ+.02,M.frame)); add(bx(.36,1.04,F0+.04,2.44,VZ+.01,VZ+.03,M.cedarD));
+  veranda(add,F0);
   add(bx(HX0-.012,5.232,0,.35,HZ0-.012,-.38,M.plinth));
   add(bx(HX0-.5,5.72,SOFFIT,SOFFIT+.14,HZ0-.5,-.4,M.eave));
   add(bx(HX0-.58,HX0-.5,SOFFIT-.02,SOFFIT+.16,HZ0-.58,.58,M.frame));
@@ -199,7 +229,7 @@ function site3d(){
   add(cyl([5.86,SOFFIT+.1,HZ0-.5],[5.86,SOFFIT+.1,.5],.07,M.gut));
   [[HX0-.05,.08],[HX0-.05,HZ0-.08],[5.27,HZ0-.08]].forEach(([a,b])=>add(cyl([a,SOFFIT,b],[a,.1,b],.04,M.gut)));
   add(bx(-1.3,-.75,4.2,6.3,-7.4,-6.85,M.wall)); add(bx(-1.36,-.69,6.3,6.38,-7.46,-6.79,M.frame));
-  V(-3.3,-.1,SILL,DOOR_HEAD,HX0);
+  V(-3.3,-.1,SILL,DOOR_HEAD,HX0,M.glassN);
   V(-7.4,-5.8,SILL,2.8,HX0); V(-11.8,-10.2,SILL,2.8,HX0);
   V(-3.1,-1.7,SILL,2.8,5.22); V(-7.1,-5.7,SILL,2.8,5.22); V(-12,-10.6,SILL,2.8,5.22);
   const bz0=HZ0-1.47, oh=2.45;
@@ -262,7 +292,7 @@ function plants(add,soil,mon){
     im.castShadow=cast!==false; im.receiveShadow=true; add(im); };
   const white=()=>mat(0xffffff,{roughness:.85}), ico=new THREE.IcosahedronGeometry(1,1), sp=new THREE.SphereGeometry(1,7,5), cy=new THREE.CylinderGeometry(1,1,1,6), co=new THREE.ConeGeometry(1,1,6);
   const bark=mat(0x5e4630,{roughness:1}), stake=mat(0x9a7a50,{roughness:1});
-  M.soil.color.set(has(12,1,2)?0xc4a080:has(11)?0xd8a868:has(10)?0xe0c070:has(7,8,9)?0xe8d890:0xffffff).convertSRGBToLinear();
+  M.soil.color.set(has(12,1,2)?0xc4a080:has(11)?0xe6c68a:has(10)?0xe0c070:has(7,8,9)?0xe8d890:0xffffff).convertSRGBToLinear();
   const SP={elma:[0x4f7f35,0xc22d2a,.055,[8,9,10]],armut:[0x5b8a3f,0xc9c24c,.06,[8,9]],ayva:[0x6d9147,0xe2bd2e,.065,[10,11]],incir:[0x3f6f30,0x4d2b52,.05,[8,9]],kiraz:[0x3f7a35,0xc4152e,.028,[6]],visne:[0x4a7d38,0x7b0f22,.03,[6,7]],erik:[0x4a7442,0x4b2e72,.04,[7,8]]};
   const names=Object.keys(SP), early=['kiraz','visne','erik','armut'];
   const crownOf=(n,k)=>{const g=SP[n][0];
@@ -624,7 +654,7 @@ function applyMode(){
   {const ck=$('clock'); if(ck) ck.hidden=mode!=='3d';}
   renderer.setClearColor(night?0x10151b:0x000000,night?1:0);
 }
-const VIEWS={antre:[[6.2,3.6,11.8],[1.2,1.3,.9]],tavuk:[[-6.2,2.2,-13],[-13,.2,-12]],sebze:[[-7.7,5.2,6.2],[-14,.4,-.5]],kumes:[[-6.5,2.2,-19.8],[1.4,1,-15.2]],bahce:[[.6,2.5,1.85],[3.6,.2,9.6]],tum:[[-16,13,27],[-.5,1.5,-3]],yan:[[-23,7,4],[.2,1.8,-6]],arka:[[-13,10,-33],[.2,1.8,-9]],ust:[[-9,92,-6.6],[-9,0,-6]]};
+const VIEWS={antre:[[6.2,3.6,11.8],[1.2,1.3,.9]],veranda:[[-2.4,3.35,6],[-2.2,.9,-2.2]],tavuk:[[-6.2,2.2,-13],[-13,.2,-12]],sebze:[[-7.7,5.2,6.2],[-14,.4,-.5]],kumes:[[-6.5,2.2,-19.8],[1.4,1,-15.2]],bahce:[[.6,2.5,1.85],[3.6,.2,9.6]],tum:[[-16,13,27],[-.5,1.5,-3]],yan:[[-23,7,4],[.2,1.8,-6]],arka:[[-13,10,-33],[.2,1.8,-9]],ust:[[-9,92,-6.6],[-9,0,-6]]};
 let view='antre';
 function setView(v){view=v;document.querySelectorAll('#views button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v)));const c=VIEWS[v];cam3.position.set(...c[0]);ctrl.target.set(...c[1]);ctrl.update();draw();}
 let raf=0;
